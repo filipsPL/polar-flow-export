@@ -54,10 +54,11 @@ class ThrottlingHandler(urllib.request.BaseHandler):
 #------------------------------------------------------------------------------
 
 class TcxFile(object):
-    def __init__(self, workout_id, date_str, content):
+    def __init__(self, workout_id, date_str, content, gpx):
         self.workout_id = workout_id
         self.date_str = date_str
         self.content = content
+        self.gpx=gpx
 
 
 #------------------------------------------------------------------------------
@@ -133,11 +134,18 @@ class PolarFlowExporter(object):
         def get_tcx_file(activity_ref):
             self._logger.info("Retrieving workout %s"
                                 % activity_ref['listItemId'])
+            gpx_data = ""
+            if(activity_ref['distance'] > 0):
+                self._logger.info("Retrieving workout %s GPX data"
+                                % activity_ref['listItemId'])
+                gpx_data = self._execute_request(
+                    "%s/export/tcx/false" % activity_ref['url'])
             return TcxFile(
                 activity_ref['listItemId'],
                 activity_ref['datetime'],
                 self._execute_request(
-                    "%s/export/tcx/false" % activity_ref['url']))
+                    "%s/export/tcx/false" % activity_ref['url']),
+                gpx_data)
 
         return (get_tcx_file(activity_ref) for activity_ref in activity_refs)
 
@@ -166,6 +174,16 @@ if __name__ == '__main__':
         output_file.write(tcx_file.content)
         output_file.close()
         print("Wrote file %s" % filename)
+        
+        if tcx_file.gpx != '':
+            gpx_filename = "%s_%s.tcx" % (
+                        tcx_file.date_str.replace(':', '_'),
+                        tcx_file.workout_id)
+            output_file = open(os.path.join(output_dir, gpx_filename), 'wb')
+            output_file.write(tcx_file.gpx)
+            output_file.close()
+            print("Wrote GPX file %s" % gpx_filename)
+        
 
     print("Export complete")
 

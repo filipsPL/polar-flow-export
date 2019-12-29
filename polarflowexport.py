@@ -135,16 +135,12 @@ class PolarFlowExporter(object):
             self._logger.info("Retrieving workout %s"
                                 % activity_ref['listItemId'])
             gpx_data = ""
-            if(activity_ref['distance'] is not None and activity_ref['distance'] > 0):
-                self._logger.info("Retrieving workout %s GPX data"
-                                % activity_ref['listItemId'])
-                gpx_data = self._execute_request(
-                    "%s/export/tcx/false" % activity_ref['url'])
+
             return TcxFile(
                 activity_ref['listItemId'],
                 activity_ref['datetime'],
                 self._execute_request(
-                    "%s/export/tcx/false" % activity_ref['url']),
+                    "/api/export/training/tcx/%s" % activity_ref['listItemId']),
                 gpx_data)
 
         return (get_tcx_file(activity_ref) for activity_ref in activity_refs)
@@ -174,7 +170,7 @@ if __name__ == '__main__':
         output_file.write(tcx_file.content)
         output_file.close()
         print("Wrote file %s" % filename)
-        
+
         if tcx_file.gpx != '':
             gpx_filename = "%s_%s.gpx" % (
                         tcx_file.date_str.replace(':', '_'),
@@ -183,7 +179,6 @@ if __name__ == '__main__':
             output_file.write(tcx_file.gpx)
             output_file.close()
             print("Wrote file %s" % gpx_filename)
-        
+
 
     print("Export complete")
-
